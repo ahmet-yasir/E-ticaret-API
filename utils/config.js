@@ -1,7 +1,7 @@
 export const config = {
-    user: 'Username',
-    password: 'password',
-    server: 'servername',
+    user: 'admin',
+    password: '1234',
+    server: 'localhost',
     database: 'ECommerceDB',
     options: {
         enableArithAbort: true,

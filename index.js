@@ -38,9 +38,12 @@ app.post('/register', async (req, res) => {
             .input('password', sql.VarChar, hashedPassword)
             .execute('spAddUserWithPassword');
 
-        res.status(201).send({ message: 'User registered successfully' });
+        if (result.recordset.length > 0 && result.recordset[0].RegisterSuccess === 1) {
+            res.status(201).send({ message: result.recordset[0].Message });
+        } else {
+            res.status(400).send({ message: 'Invalid email' });
+        }
     } catch (err) {
-        // E-posta zaten varsa veya başka bir veritabanı hatası oluşursa
         console.log(err);
         res.status(500).send(err.message);
     }
