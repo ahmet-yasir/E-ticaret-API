@@ -51,22 +51,25 @@ app.post('/register', async (req, res) => {
 
 // Google Auth ile Kullanıcı Kayıt Endpoint'i
 app.post('/register-google', async (req, res) => {
-  const { name, surname, email, token } = req.body;
-
-  try {
-      const pool = await poolPromise;
-      const result = await pool.request()
-          .input('name', sql.VarChar, name)
-          .input('surname', sql.VarChar, surname)
-          .input('email', sql.VarChar, email)
-          .input('token', sql.VarChar, token)
-          .execute('spAddUserWithGoogleAuth');
-
-      res.status(201).send({ message: 'User registered successfully with Google Auth' });
-  } catch (err) {
-      // Eğer aynı e-posta adresi ile zaten bir kayıt varsa veya başka bir veritabanı hatası olursa
-      res.status(500).send(err.message);
-  }
+    const { name, surname, email, token } = req.body;
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('name', sql.VarChar, name)
+            .input('surname', sql.VarChar, surname)
+            .input('email', sql.VarChar, email)
+            .input('token', sql.VarChar, token)
+            .execute('spAddUserWithGoogleAuth');
+        if (result.recordset.length > 0 && result.recordset[0].RegisterSuccess === 1) {
+            res.status(201).send({ message: result.recordset[0].Message });
+        } else {
+            res.status(400).send({ message: 'Invalid email' });
+        }
+    } 
+    catch (err) {
+        // Eğer aynı e-posta adresi ile zaten bir kayıt varsa veya başka bir veritabanı hatası olursa
+        res.status(500).send(err.message);
+    }
 });
 
 // Kullanıcı Giriş Endpoint'i (E-posta ve Şifre ile)
