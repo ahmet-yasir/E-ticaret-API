@@ -39,15 +39,14 @@ app.post('/register', async (req, res) => {
             .execute('spAddUserWithPassword');
 
         if (result.recordset.length > 0 && result.recordset[0].RegisterSuccess === 1) {
-            res.status(201).send({ message: result.recordset[0].Message });
+            res.status(201).send({ message: result.recordset[0].Message, success:true });
         } 
 		else {
-            res.status(400).send({ message: 'Invalid email' });
+            res.status(400).send({ message: 'Invalid email', success: false });
         }
     } 
 	catch (err) {
-        console.log(err);
-        res.status(500).send(err.message);
+        res.status(500).send({message: 'Kayıt olurken bir hata oluştu', error: err});
     }
 });
 
@@ -63,15 +62,15 @@ app.post('/register-google', async (req, res) => {
             .input('token', sql.VarChar, token)
             .execute('spAddUserWithGoogleAuth');
         if (result.recordset.length > 0 && result.recordset[0].RegisterSuccess === 1) {
-            res.status(201).send({ message: result.recordset[0].Message });
+            res.status(201).send({ message: result.recordset[0].Message, success: true });
         } 
 		else {
-            res.status(400).send({ message: 'Invalid email' });
+            res.status(400).send({ message: 'Invalid email', success: false});
         }
     } 
     catch (err) {
         // Eğer aynı e-posta adresi ile zaten bir kayıt varsa veya başka bir veritabanı hatası olursa
-        res.status(500).send(err.message);
+        res.status(500).send({message: 'Kayıt olurken bir hata oluştu', error: err});
     }
 });
 
@@ -82,47 +81,47 @@ app.post('/login', async (req, res) => {
   // Şifreyi hash'le
   const hashedPassword = md5(password);
 
-  try {
-      const pool = await poolPromise;
-      const result = await pool.request()
-          .input('email', sql.VarChar, email)
-          .input('password', sql.VarChar, hashedPassword)
-          .execute('spLoginUserWithPassword');
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+        .input('email', sql.VarChar, email)
+        .input('password', sql.VarChar, hashedPassword)
+        .execute('spLoginUserWithPassword');
 
-      if (result.recordset.length > 0 && result.recordset[0].LoginSuccess === 1) {
-          res.status(200).send({ message: result.recordset[0].Message });
-      } 
-	  else {
-          res.status(401).send({ message: 'Invalid email or password' });
-      }
-  } 
-  catch (err) {
-    console.log(err);
-      res.status(500).send({ message: 'Error logging in', error: err });
-  }
+        if (result.recordset.length > 0 && result.recordset[0].LoginSuccess === 1) {
+        	res.status(200).send({ message: result.recordset[0].Message, success:true });
+        } 
+        else {
+        	res.status(401).send({ message: 'Invalid email or password', success:false});
+        }
+    } 
+    catch (err) {
+        console.log(err);
+    	res.status(500).send({ message: 'Error logging in', error: err });
+    }
 });
 
 // Kullanıcı Giriş Endpoint'i (Google Authentication ile)
 app.post('/login-google', async (req, res) => {
-  const { email, token } = req.body;
+	const { email, token } = req.body;
 
-  try {
-      const pool = await poolPromise;
-      const result = await pool.request()
-          .input('email', sql.VarChar, email)
-          .input('token', sql.VarChar, token)
-          .execute('spLoginUserWithGoogleAuth');
+	try {
+		const pool = await poolPromise;
+		const result = await pool.request()
+			.input('email', sql.VarChar, email)
+			.input('token', sql.VarChar, token)
+			.execute('spLoginUserWithGoogleAuth');
 
-      if (result.recordset[0].LoginSuccess === 1) {
-          res.status(200).send({ message: result.recordset[0].Message });
-      } 
-	  else {
-          res.status(401).send({ message: result.recordset[0].Message });
-      }
-  } 
-  catch (err) {
-      res.status(500).send({ message: 'Error logging in with Google', error: err.message });
-  }
+		if (result.recordset[0].LoginSuccess === 1) {
+			res.status(200).send({ message: result.recordset[0].Message, success:true });
+		} 
+		else {
+			res.status(401).send({ message: result.recordset[0].Message, success:false});
+		}
+	} 
+	catch (err) {
+		res.status(500).send({ message: 'Error logging in with Google', error: err.message });
+	}
 });
 
 // Kullanıcı Adres Ekleme Endpoint'i
@@ -137,7 +136,7 @@ app.post('/add-address', async (req, res) => {
             .query('SELECT 1 FROM Users WHERE user_id = @user_id');
 
         if (userCheckResult.recordset.length === 0) {
-            return res.status(400).send({ message: 'Geçersiz kullanıcı ID.', error: 'Invalid user ID' });
+            return res.status(400).send({ message: 'Geçersiz kullanıcı ID.', success: false });
         }
 
         // Adresi eklemek için stored procedure çağrısı yapın
@@ -151,12 +150,11 @@ app.post('/add-address', async (req, res) => {
             .execute('spAddAddress');
 
         // Başarı mesajını yanıt olarak gönderin
-        res.status(201).send({ message: result.recordset[0].Message });
+        res.status(201).send({ message: result.recordset[0].Message, success: true });
     } 
 	catch (err) {
         // Hata durumunda hata mesajını yanıt olarak gönderin
-        console.error('Adres ekleme hatası:', err);
-        res.status(500).send({ message: 'Adres eklenirken bir hata oluştu', error: err.message });
+        res.status(500).send({ message: 'Adres eklenirken bir hata oluştu', error: err });
     }
 });
 
@@ -173,12 +171,11 @@ app.post('/add-favorite', async (req, res) => {
             .execute('spAddFavorite');
 
         // Başarı mesajını yanıt olarak gönderin
-        res.status(201).send({ message: insertResult.recordset[0].Message });
+        res.status(201).send({ message: insertResult.recordset[0].Message, success: true });
     } 
 	catch (err) {
         // Hata durumunda hata mesajını yanıt olarak gönderin
-        console.error('Favori eklenirken bir hata oluştu:', err);
-        res.status(500).send({ message: 'Favori eklenirken bir hata oluştu', error: err.message });
+        res.status(500).send({ message: 'Favori eklenirken bir hata oluştu', error: err });
     }
 });
 
@@ -197,12 +194,11 @@ app.post('/add-review', async (req, res) => {
             .execute('spAddReview');
 
         // Başarı mesajını yanıt olarak gönderin
-        res.status(201).send({ message: insertResult.recordset[0].Message });
+        res.status(201).send({ message: insertResult.recordset[0].Message, success: true });
     } 
 	catch (err) {
         // Hata durumunda hata mesajını yanıt olarak gönderin
-        console.error('Yorum eklenirken bir hata oluştu:', err);
-        res.status(500).send({ message: 'Yorum eklenirken bir hata oluştu', error: err.message });
+        res.status(500).send({ message: 'Yorum eklenirken bir hata oluştu', error: err });
     }
 });
 
@@ -220,13 +216,11 @@ app.post('/add-to-cart', async (req, res) => {
             .execute('spAddToCart');
 
         // Başarı mesajını yanıt olarak gönderin
-        res.status(200).send({ message: cartUpdateResult.recordset[0].Message });
+        res.status(200).send({ message: cartUpdateResult.recordset[0].Message, success: true });
     } 
 	catch (err) {
         // Hata durumunda hata mesajını yanıt olarak gönderin
-        console.error('Ürün sepete eklenirken bir hata oluştu:', err);
-        console.log(err);
-        res.status(500).send({ message: 'Ürün sepete eklenirken bir hata oluştu.', error: err.message });
+        res.status(500).send({ message: 'Ürün sepete eklenirken bir hata oluştu.', error: err });
     }
 });
 
@@ -246,12 +240,10 @@ app.put('/changePassword', async (req, res) => {
             .execute('spChangePassword');
 
         // Şifre başarıyla güncellendi
-        res.status(200).send({ message: chancePasswordResult.recordset[0].Message });
+        res.status(200).send({ message: chancePasswordResult.recordset[0].Message, success: true });
     } 
 	catch (err) {
-        console.error('Şifre değiştirme hatası:', err);
-        console.log(err);
-        res.status(500).send({ message: 'Şifre değiştirme hatası' });
+        res.status(500).send({ message: 'Şifre değiştirme hatası', error: err });
     }
 });
 
@@ -268,16 +260,15 @@ app.delete('/deleteAddress', async (req, res) => {
 
         if (result.rowsAffected[0] > 0) {
             // Adres başarıyla silindi
-            res.status(200).send({ message: 'Address deleted successfully' });
+            res.status(200).send({ message: 'Address deleted successfully', success: true });
         } 
 		else {
             // Adres bulunamadı
-            res.status(404).send({ message: 'Address not found or does not belong to user' });
+            res.status(404).send({ message: 'Address not found or does not belong to user', success: false});
         }
     } 
 	catch (err) {
-        console.error('Adres silme hatası:', err);
-        res.status(500).send({ message: 'Adres silme hatası' });
+        res.status(500).send({ message: 'Adres silme hatası', error: err });
     }
 });
 
@@ -293,14 +284,14 @@ app.delete('/deleteReview', async (req, res) => {
             .execute('spDeleteReview');
 
         if (result.rowsAffected[0] > 0) {
-            res.status(200).send({ message: 'Review deleted successfully' });
+            res.status(200).send({ message: 'Review deleted successfully', success: true });
         } 
 		else {
-            res.status(404).send({ message: 'Review not found or does not belong to user' });
+            res.status(404).send({ message: 'Review not found or does not belong to user', success: false });
         }
     } 
 	catch (err) {
-        res.status(500).send({ message: 'Error deleting review', error: err.message });
+        res.status(500).send({ message: 'Error deleting review', error: err });
     }
 });
 
@@ -320,11 +311,10 @@ app.get('/filter-products', async (req, res) => {
             .execute('spFilterProducts');
 
         // Sonuçları döndürme
-        res.status(200).json(result.recordset);
+        res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
-        console.error('Error filtering products:', error.message);
-        res.status(500).json({ error: 'Error filtering products' });
+        res.status(500).send({ error: 'Error filtering products', error: err });
     }
 });
 
@@ -344,15 +334,14 @@ app.get('/product-details-and-reviews/:productId', async (req, res) => {
 
         // Ürün bulunamazsa hata döndür
         if (!productDetailsAndReviews) {
-            return res.status(404).json({ error: 'Product not found' });
+            return res.status(404).send({ error: 'Product not found', error: err });
         }
 
         // Sonuçları döndür
-        res.status(200).json(productDetailsAndReviews);
+        res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
-        console.error('Error fetching product details and reviews:', error.message);
-        res.status(500).json({ error: 'Error fetching product details and reviews' });
+        res.status(500).send({ error: 'Error fetching product details and reviews', error: err });
     }
 });
 
@@ -368,11 +357,10 @@ app.get('/product-details', async (req, res) => {
             .execute('spGetProductDetailsUsingView');
 
         // Sonuçları döndürme
-        res.status(200).json(result.recordset);
+        res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
-        console.error('Error fetching product details:', error.message);
-        res.status(500).json({ error: 'Error fetching product details' });
+        res.status(500).send({ error: 'Error fetching product details', error: err });
     }
 });
 
@@ -388,11 +376,10 @@ app.get('/user-addresses', async (req, res) => {
             .execute('spListUserAddresses');
 
         // Sonuçları döndürme
-        res.status(200).json(result.recordset);
+        res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
-        console.error('Error listing user addresses:', error.message);
-        res.status(500).json({ error: 'Error listing user addresses' });
+        res.status(500).send({ error: 'Error listing user addresses', error: err});
     }
 });
 
@@ -423,11 +410,10 @@ app.get('/user-orders', async (req, res) => {
         });
 
         // Sonuçları döndürme
-        res.status(200).json(userOrders);
+        res.status(200).send({message: userOrders, success: true});
     } 
 	catch (error) {
-        console.error('Error listing user orders:', error.message);
-        res.status(500).json({ error: 'Error listing user orders' });
+        res.status(500).send({ error: 'Error listing user orders', error: err});
     }
 });
 // Sepetten Ürün Kaldırma Endpoint'i
@@ -444,11 +430,10 @@ app.delete('/remove-from-cart', async (req, res) => {
             .execute('spRemoveFromCart');
 
         // İşlem başarılıysa başarılı yanıt döndürme
-        res.status(200).json({ message: 'Product removed from cart successfully' });
+        res.status(200).send({ message: 'Product removed from cart successfully', success: true });
     } 
 	catch (error) {
-        console.error('Error removing product from cart:', error.message);
-        res.status(500).json({ error: 'Error removing product from cart' });
+        res.status(500).send({ error: 'Error removing product from cart', error: err });
     }
 });
 
@@ -465,11 +450,10 @@ app.delete('/remove-from-favorites', async (req, res) => {
             .execute('spRemoveFromFavorites');
 
         // Mesajı döndürme
-        res.status(200).json({ message: result.recordset[0].Message });
+        res.status(200).send({ message: result.recordset[0].Message, success: true });
     } 
 	catch (error) {
-        console.error('Error removing from favorites:', error.message);
-        res.status(500).json({ error: 'Error removing from favorites' });
+        res.status(500).send({ error: 'Error removing from favorites', error: err });
     }
 });
 
@@ -485,11 +469,10 @@ app.get('/search-products', async (req, res) => {
             .execute('spSearchProductsByTitle');
 
         // Sonuçları döndürme
-        res.status(200).json(result.recordset);
+        res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
-        console.error('Error searching products by title:', error.message);
-        res.status(500).json({ error: 'Error searching products by title' });
+        res.status(500).send({ error: 'Error searching products by title', error: err });
     }
 });
 
@@ -505,11 +488,10 @@ app.get('/sort-products', async (req, res) => {
             .execute('spSortProducts');
 
         // Sonuçları döndürme
-        res.status(200).json(result.recordset);
+        res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
-        console.error('Error sorting products:', error.message);
-        res.status(500).json({ error: 'Error sorting products' });
+        res.status(500).send({ error: 'Error sorting products', error: err });
     }
 });
 
@@ -524,12 +506,11 @@ app.put('/user/premium/:user_id', async (req, res) => {
             .input('user_id', sql.UniqueIdentifier, user_id)
             .execute('spSetUserPremium');
         // Başarılı yanıtı döndür
-        res.status(200).json({ message: 'User premium status updated successfully' });
+        res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
         // Hata durumunda uygun yanıtı döndür
-        console.error('Error updating user premium status:', error.message);
-        res.status(500).json({ error: 'Error updating user premium status' });
+        res.status(500).send({ error: 'Error updating user premium status', error: err });
     }
 });
 
@@ -548,12 +529,11 @@ app.put('/reviews/:review_id', async (req, res) => {
             .execute('spUpdateReview');
 
         // Başarılı yanıtı döndür
-        res.status(200).json({ message: 'Review updated successfully' });
+        res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
         // Hata durumunda uygun yanıtı döndür
-        console.error('Error updating review:', error.message);
-        res.status(500).json({ error: 'Error updating review' });
+        res.status(500).send({ error: 'Error updating review', error: err });
     }
 });
 
@@ -575,11 +555,10 @@ app.put('/update-user-address/:address_id', async (req, res) => {
             .execute('spUpdateUserAddress');
 
         // Sonucu döndür
-        res.status(200).json({ message: result.recordset[0].Message });
+        res.status(200).send({ message: result.recordset[0].Message, success: true });
     } 
 	catch (error) {
-        console.error('Error updating user address:', error.message);
-        res.status(500).json({ error: 'Error updating user address' });
+        res.status(500).send({ error: 'Error updating user address', error: err });
     }
 });
 
@@ -596,18 +575,17 @@ app.get('/view-cart/:user_id', async (req, res) => {
 
         // Eğer sepette ürün yoksa uygun bir mesaj döndür
         if (!result.recordset || result.recordset.length === 0) {
-            return res.status(404).json({ message: 'No cart available for the user' });
+            return res.status(404).send({ message: 'No cart available for the user', success: false });
         }
 
         // Sepet ürünlerini ve toplam tutarı döndür
         const cartItems = result.recordsets[0];
         const totalAmount = result.recordsets[1][0].total_amount;
 
-        res.status(200).json({ items: cartItems, totalAmount: totalAmount });
+        res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
-        console.error('Error viewing cart:', error.message);
-        res.status(500).json({ error: 'Error viewing cart' });
+        res.status(500).send({ error: 'Error viewing cart', error: err });
     }
 });
 
@@ -622,11 +600,10 @@ app.get('/order-history/:userId', async (req, res) => {
             .execute('spViewOrderHistory');
 
         // Sonuçları döndürme
-        res.status(200).json(result.recordset);
+        res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
-        console.error('Error fetching order history:', error.message);
-        res.status(500).json({ error: 'Error fetching order history' });
+        res.status(500).send({ error: 'Error fetching order history', error: err });
     }
 });
 
@@ -642,14 +619,10 @@ app.post('/place-order', async (req, res) => {
             .execute('spPlaceOrder');
 
         // Return success message and order ID
-        res.status(200).json({
-            message: result.recordset[0].Message,
-            orderId: result.recordset[0].OrderId
-        });
+        res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
-        console.error('Error placing order:', error.message);
-        res.status(500).json({ error: 'Error placing order' });
+        res.status(500).send({ error: 'Error placing order', error: err });
     }
 });
 
@@ -665,11 +638,10 @@ app.get('/product-reviews', async (req, res) => {
             .execute('spViewProductReviews');
 
         // Return product reviews
-        res.status(200).json(result.recordset);
+        res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
-        console.error('Error fetching product reviews:', error.message);
-        res.status(500).json({ error: 'Error fetching product reviews' });
+        res.status(500).send({ error: 'Error fetching product reviews', error: err });
     }
 });
 
