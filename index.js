@@ -26,7 +26,6 @@ app.use(cors());
 app.post('/register', async (req, res) => {
     const { name, surname, email, password } = req.body;
 
-    // Şifreyi hash'le
     const hashedPassword = md5(password);
 
     try {
@@ -69,7 +68,6 @@ app.post('/register-google', async (req, res) => {
         }
     } 
     catch (err) {
-        // Eğer aynı e-posta adresi ile zaten bir kayıt varsa veya başka bir veritabanı hatası olursa
         res.status(500).send({message: 'Kayıt olurken bir hata oluştu', error: err});
     }
 });
@@ -78,7 +76,6 @@ app.post('/register-google', async (req, res) => {
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  // Şifreyi hash'le
   const hashedPassword = md5(password);
 
     try {
@@ -129,7 +126,6 @@ app.post('/add-address', async (req, res) => {
     const { user_id, name, surname, phone, address, address_title } = req.body;
 
     try {
-        // Kullanıcı ID'sinin geçerli olup olmadığını kontrol etmek için veritabanı sorgusu yapın
         const pool = await poolPromise;
         const userCheckResult = await pool.request()
             .input('user_id', sql.UniqueIdentifier, user_id)
@@ -139,7 +135,6 @@ app.post('/add-address', async (req, res) => {
             return res.status(400).send({ message: 'Geçersiz kullanıcı ID.', success: false });
         }
 
-        // Adresi eklemek için stored procedure çağrısı yapın
         const result = await pool.request()
             .input('user_id', sql.UniqueIdentifier, user_id)
             .input('name', sql.VarChar(32), name)
@@ -149,11 +144,9 @@ app.post('/add-address', async (req, res) => {
             .input('address_title', sql.VarChar(30), address_title)
             .execute('spAddAddress');
 
-        // Başarı mesajını yanıt olarak gönderin
         res.status(201).send({ message: result.recordset[0].Message, success: true });
     } 
 	catch (err) {
-        // Hata durumunda hata mesajını yanıt olarak gönderin
         res.status(500).send({ message: 'Adres eklenirken bir hata oluştu', error: err });
     }
 });
@@ -163,18 +156,15 @@ app.post('/add-favorite', async (req, res) => {
     const { user_id, product_id } = req.body;
 
     try {
-        // Yeni favori olarak ürünü ekleyin
         const pool = await poolPromise;  
         const insertResult = await pool.request()
             .input('user_id', sql.UniqueIdentifier, user_id)
             .input('product_id', sql.UniqueIdentifier, product_id)
             .execute('spAddFavorite');
 
-        // Başarı mesajını yanıt olarak gönderin
         res.status(201).send({ message: insertResult.recordset[0].Message, success: true });
     } 
 	catch (err) {
-        // Hata durumunda hata mesajını yanıt olarak gönderin
         res.status(500).send({ message: 'Favori eklenirken bir hata oluştu', error: err });
     }
 });
@@ -184,7 +174,6 @@ app.post('/add-review', async (req, res) => {
     const { product_id, user_id, review_comment, review_star } = req.body;
 
     try {
-        // Yorumu eklemek için prosedürü çağırın
         const pool = await poolPromise;
         const insertResult = await pool.request()
             .input('product_id', sql.UniqueIdentifier, product_id)
@@ -193,11 +182,9 @@ app.post('/add-review', async (req, res) => {
             .input('review_star', sql.Int, review_star)
             .execute('spAddReview');
 
-        // Başarı mesajını yanıt olarak gönderin
         res.status(201).send({ message: insertResult.recordset[0].Message, success: true });
     } 
 	catch (err) {
-        // Hata durumunda hata mesajını yanıt olarak gönderin
         res.status(500).send({ message: 'Yorum eklenirken bir hata oluştu', error: err });
     }
 });
@@ -207,7 +194,6 @@ app.post('/add-to-cart', async (req, res) => {
     const { user_id, product_id, quantity } = req.body;
 
     try {
-        // Ürünü sepete ekle veya miktarını güncelle
         const pool = await poolPromise;
         const cartUpdateResult = await pool.request()
             .input('user_id', sql.UniqueIdentifier, user_id)
@@ -215,11 +201,9 @@ app.post('/add-to-cart', async (req, res) => {
             .input('quantity', sql.Int, quantity)
             .execute('spAddToCart');
 
-        // Başarı mesajını yanıt olarak gönderin
         res.status(200).send({ message: cartUpdateResult.recordset[0].Message, success: true });
     } 
 	catch (err) {
-        // Hata durumunda hata mesajını yanıt olarak gönderin
         res.status(500).send({ message: 'Ürün sepete eklenirken bir hata oluştu.', error: err });
     }
 });
@@ -228,7 +212,6 @@ app.post('/add-to-cart', async (req, res) => {
 app.put('/changePassword', async (req, res) => {
     const { user_id, new_password } = req.body;
 
-    // Şifreyi hash'le
     const newhashedPassword = md5(new_password);
 
     try {
@@ -259,11 +242,9 @@ app.delete('/deleteAddress', async (req, res) => {
             .execute('spDeleteAddress');
 
         if (result.rowsAffected[0] > 0) {
-            // Adres başarıyla silindi
             res.status(200).send({ message: 'Address deleted successfully', success: true });
         } 
 		else {
-            // Adres bulunamadı
             res.status(404).send({ message: 'Address not found or does not belong to user', success: false});
         }
     } 
@@ -295,13 +276,11 @@ app.delete('/deleteReview', async (req, res) => {
     }
 });
 
-
 // Ürün Filtreleme Endpoint'i
 app.get('/filter-products', async (req, res) => {
     try {
         const { producerID, categoryID, minPrice, maxPrice } = req.body;
 
-        // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
             .input('ProducerID', sql.Int, producerID)
@@ -310,7 +289,6 @@ app.get('/filter-products', async (req, res) => {
             .input('MaxPrice', sql.Money, maxPrice)
             .execute('spFilterProducts');
 
-        // Sonuçları döndürme
         res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
@@ -319,9 +297,9 @@ app.get('/filter-products', async (req, res) => {
 });
 
 // Ürün Detayları ve Yorumları Getiren Endpoint
-app.get('/product-details-and-reviews/:productId', async (req, res) => {
+app.get('/product-details-and-reviews/:productID', async (req, res) => {
     try {
-        const { productID } = req.body;
+        const { productID } = req.params;
 
         // Veritabanı bağlantısı
         const pool = await poolPromise;
@@ -329,15 +307,12 @@ app.get('/product-details-and-reviews/:productId', async (req, res) => {
             .input('product_id', sql.UniqueIdentifier, productID)
             .execute('spGetProductDetailsAndReviews');
 
-        // Prosedürden dönen sonuçları alın
         const productDetailsAndReviews = result.recordset[0];
 
-        // Ürün bulunamazsa hata döndür
         if (!productDetailsAndReviews) {
             return res.status(404).send({ error: 'Product not found', error: err });
         }
 
-        // Sonuçları döndür
         res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
@@ -346,17 +321,15 @@ app.get('/product-details-and-reviews/:productId', async (req, res) => {
 });
 
 // Ürün Detayları Endpoint'i
-app.get('/product-details', async (req, res) => {
+app.get('/product-details/:productID', async (req, res) => {
     try {
-        const { productID } = req.body;
+        const { productID } = req.params;
 
-        // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
             .input('product_id', sql.UniqueIdentifier, productID)
             .execute('spGetProductDetailsUsingView');
 
-        // Sonuçları döndürme
         res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
@@ -369,13 +342,11 @@ app.get('/user-addresses', async (req, res) => {
     try {
         const { userID } = req.body;
 
-        // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
             .input('user_id', sql.UniqueIdentifier, userID)
             .execute('spListUserAddresses');
 
-        // Sonuçları döndürme
         res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
@@ -388,17 +359,14 @@ app.get('/user-orders', async (req, res) => {
     try {
         const { UserID } = req.body;
 
-        // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
             .input('user_id', sql.UniqueIdentifier, UserID)
             .execute('spListUserOrders');
 
-        // Siparişleri ve detaylarını ayrı ayrı diziye ayırma
         const orders = result.recordsets[0];
         const orderDetails = result.recordsets[1];
 
-        // Sonuçları düzenleme
         const userOrders = orders.map(order => {
             const details = orderDetails.filter(detail => detail.order_id === order.order_id);
             return {
@@ -409,19 +377,18 @@ app.get('/user-orders', async (req, res) => {
             };
         });
 
-        // Sonuçları döndürme
         res.status(200).send({message: userOrders, success: true});
     } 
 	catch (error) {
         res.status(500).send({ error: 'Error listing user orders', error: err});
     }
 });
+
 // Sepetten Ürün Kaldırma Endpoint'i
 app.delete('/remove-from-cart', async (req, res) => {
     try {
         const { UserID, ProductID, Quantity } = req.body;
 
-        // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
             .input('user_id', sql.UniqueIdentifier, UserID)
@@ -429,7 +396,6 @@ app.delete('/remove-from-cart', async (req, res) => {
             .input('quantity', sql.Int, Quantity)
             .execute('spRemoveFromCart');
 
-        // İşlem başarılıysa başarılı yanıt döndürme
         res.status(200).send({ message: 'Product removed from cart successfully', success: true });
     } 
 	catch (error) {
@@ -442,14 +408,12 @@ app.delete('/remove-from-favorites', async (req, res) => {
     try {
         const { UserID, ProductID } = req.body;
 
-        // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
             .input('user_id', sql.UniqueIdentifier, UserID)
             .input('product_id', sql.UniqueIdentifier, ProductID)
             .execute('spRemoveFromFavorites');
 
-        // Mesajı döndürme
         res.status(200).send({ message: result.recordset[0].Message, success: true });
     } 
 	catch (error) {
@@ -462,13 +426,11 @@ app.get('/search-products', async (req, res) => {
     try {
         const { SearchTerm } = req.body;
 
-        // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
             .input('searchTerm', sql.VarChar(100), SearchTerm)
             .execute('spSearchProductsByTitle');
 
-        // Sonuçları döndürme
         res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
@@ -476,18 +438,15 @@ app.get('/search-products', async (req, res) => {
     }
 });
 
-// Ürünleri sıralama endpoint'i
 app.get('/sort-products', async (req, res) => {
     try {
         const { sortOption } = req.body;
 
-        // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
             .input('SortOption', sql.Int, sortOption)
             .execute('spSortProducts');
 
-        // Sonuçları döndürme
         res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
@@ -496,31 +455,25 @@ app.get('/sort-products', async (req, res) => {
 });
 
 // Kullanıcıyı premium yapma endpoint'i
-app.put('/user/premium/:user_id', async (req, res) => {
+app.put('/user-premium', async (req, res) => {
     try {
         const { user_id } = req.body;
-        // Veritabanı bağlantısını al
         const pool = await poolPromise;
-        // Prosedürü çağır
         const result = await pool.request()
             .input('user_id', sql.UniqueIdentifier, user_id)
             .execute('spSetUserPremium');
-        // Başarılı yanıtı döndür
         res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
-        // Hata durumunda uygun yanıtı döndür
         res.status(500).send({ error: 'Error updating user premium status', error: err });
     }
 });
 
 // Yorum güncelleme endpoint'i
-app.put('/reviews/:review_id', async (req, res) => {
+app.put('/reviews-update', async (req, res) => {
     try {
         const { review_id, user_id, new_comment, new_star } = req.body;
-        // Veritabanı bağlantısını al
         const pool = await poolPromise;
-        // Prosedürü çağır
         const result = await pool.request()
             .input('review_id', sql.UniqueIdentifier, review_id)
             .input('user_id', sql.UniqueIdentifier, user_id)
@@ -528,21 +481,18 @@ app.put('/reviews/:review_id', async (req, res) => {
             .input('new_star', sql.Int, new_star)
             .execute('spUpdateReview');
 
-        // Başarılı yanıtı döndür
         res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
-        // Hata durumunda uygun yanıtı döndür
         res.status(500).send({ error: 'Error updating review', error: err });
     }
 });
 
 // Adres güncelleme endpoint'i
-app.put('/update-user-address/:address_id', async (req, res) => {
+app.put('/update-user-address', async (req, res) => {
     try {
         const { address_id, user_id, name, surname, phone, address, address_title } = req.body;
 
-        // Veritabanında adresi güncelle
         const pool = await poolPromise;
         const result = await pool.request()
             .input('address_id', sql.UniqueIdentifier, address_id)
@@ -554,7 +504,6 @@ app.put('/update-user-address/:address_id', async (req, res) => {
             .input('address_title', sql.VarChar(30), address_title)
             .execute('spUpdateUserAddress');
 
-        // Sonucu döndür
         res.status(200).send({ message: result.recordset[0].Message, success: true });
     } 
 	catch (error) {
@@ -563,22 +512,18 @@ app.put('/update-user-address/:address_id', async (req, res) => {
 });
 
 // Cart View Endpoint
-app.get('/view-cart/:user_id', async (req, res) => {
+app.get('/view-cart', async (req, res) => {
     try {
         const { user_id } = req.body;
-        // Veritabanı bağlantısı
         const pool = await poolPromise;       
-        // Sepet bilgilerini almak için stored procedure çağrısı
         const result = await pool.request()
             .input('user_id', sql.UniqueIdentifier, user_id)
             .execute('spViewCart');
 
-        // Eğer sepette ürün yoksa uygun bir mesaj döndür
         if (!result.recordset || result.recordset.length === 0) {
             return res.status(404).send({ message: 'No cart available for the user', success: false });
         }
 
-        // Sepet ürünlerini ve toplam tutarı döndür
         const cartItems = result.recordsets[0];
         const totalAmount = result.recordsets[1][0].total_amount;
 
@@ -589,17 +534,15 @@ app.get('/view-cart/:user_id', async (req, res) => {
     }
 });
 
-app.get('/order-history/:userId', async (req, res) => {
+app.get('/order-history', async (req, res) => {
     try {
         const { user_id } = req.body;
 
-        // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
             .input('user_id', sql.UniqueIdentifier, user_id)
             .execute('spViewOrderHistory');
 
-        // Sonuçları döndürme
         res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
@@ -612,13 +555,11 @@ app.post('/place-order', async (req, res) => {
     try {
         const { user_id } = req.body;
 
-        // Database connection
         const pool = await poolPromise;
         const result = await pool.request()
             .input('user_id', sql.UniqueIdentifier, user_id)
             .execute('spPlaceOrder');
 
-        // Return success message and order ID
         res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
@@ -631,13 +572,11 @@ app.get('/product-reviews', async (req, res) => {
     try {
         const { product_id } = req.body;
 
-        // Database connection
         const pool = await poolPromise;
         const result = await pool.request()
             .input('product_id', sql.UniqueIdentifier, product_id)
             .execute('spViewProductReviews');
 
-        // Return product reviews
         res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (error) {
