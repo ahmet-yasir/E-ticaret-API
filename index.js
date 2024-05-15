@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
-// Kullanıcı Kayıt Endpoint'i
+// Endpoint to register with email and password
 app.post('/register', async (req, res) => {
     const { name, surname, email, password } = req.body;
 
@@ -49,7 +49,7 @@ app.post('/register', async (req, res) => {
     }
 });
 
-// Google Auth ile Kullanıcı Kayıt Endpoint'i
+// Endpoint to register with Google Authentication
 app.post('/register-google', async (req, res) => {
     const { name, surname, email, token } = req.body;
     try {
@@ -72,7 +72,7 @@ app.post('/register-google', async (req, res) => {
     }
 });
 
-// Kullanıcı Giriş Endpoint'i (E-posta ve Şifre ile)
+// Endpoint to login with email and password
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -98,7 +98,7 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// Kullanıcı Giriş Endpoint'i (Google Authentication ile)
+// Endpoint to login with Google Authentication
 app.post('/login-google', async (req, res) => {
 	const { email, token } = req.body;
 
@@ -121,7 +121,7 @@ app.post('/login-google', async (req, res) => {
 	}
 });
 
-// Kullanıcı Adres Ekleme Endpoint'i
+// Endpoint to add address
 app.post('/add-address', async (req, res) => {
     const { user_id, name, surname, phone, address, address_title } = req.body;
 
@@ -151,7 +151,7 @@ app.post('/add-address', async (req, res) => {
     }
 });
 
-// Favori Ekleme Endpoint'i
+// Endpoint to add favorite
 app.post('/add-favorite', async (req, res) => {
     const { user_id, product_id } = req.body;
 
@@ -169,7 +169,7 @@ app.post('/add-favorite', async (req, res) => {
     }
 });
 
-// Yorum Ekleme Endpoint'i
+// Endpoint to add review
 app.post('/add-review', async (req, res) => {
     const { product_id, user_id, review_comment, review_star } = req.body;
 
@@ -189,7 +189,7 @@ app.post('/add-review', async (req, res) => {
     }
 });
 
-// Sepete Ürün Ekleme Endpoint'i
+// Endpoint to add product on cart
 app.post('/add-to-cart', async (req, res) => {
     const { user_id, product_id, quantity } = req.body;
 
@@ -208,8 +208,8 @@ app.post('/add-to-cart', async (req, res) => {
     }
 });
 
-// Kullanıcı şifresini değiştirme Endpoint'i
-app.put('/changePassword', async (req, res) => {
+// Endpoint to chacge password
+app.put('/change-Password', async (req, res) => {
     const { user_id, new_password } = req.body;
 
     const newhashedPassword = md5(new_password);
@@ -222,7 +222,6 @@ app.put('/changePassword', async (req, res) => {
             .input('new_password', sql.VarChar, newhashedPassword)
             .execute('spChangePassword');
 
-        // Şifre başarıyla güncellendi
         res.status(200).send({ message: chancePasswordResult.recordset[0].Message, success: true });
     } 
 	catch (err) {
@@ -230,8 +229,8 @@ app.put('/changePassword', async (req, res) => {
     }
 });
 
-// Kullanıcı adresini silme Endpoint'i
-app.delete('/deleteAddress', async (req, res) => {
+// Endpoint to delete address
+app.delete('/delete-Address', async (req, res) => {
     const { address_id, user_id } = req.body;
 
     try {
@@ -253,8 +252,8 @@ app.delete('/deleteAddress', async (req, res) => {
     }
 });
 
-// Kullanıcı yorumunu silme Endpoint'i
-app.delete('/deleteReview', async (req, res) => {
+// Endpoint to delete review
+app.delete('/delete-Review', async (req, res) => {
     const { review_id, user_id } = req.body;
 
     try {
@@ -276,7 +275,7 @@ app.delete('/deleteReview', async (req, res) => {
     }
 });
 
-// Ürün Filtreleme Endpoint'i
+// Endpoint to filter product
 app.get('/filter-products', async (req, res) => {
     try {
         const { producerID, categoryID, minPrice, maxPrice } = req.body;
@@ -296,12 +295,11 @@ app.get('/filter-products', async (req, res) => {
     }
 });
 
-// Ürün Detayları ve Yorumları Getiren Endpoint
+// Endpoint to view product details and reviews
 app.get('/product-details-and-reviews/:productID', async (req, res) => {
     try {
         const { productID } = req.params;
 
-        // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
             .input('product_id', sql.UniqueIdentifier, productID)
@@ -320,7 +318,7 @@ app.get('/product-details-and-reviews/:productID', async (req, res) => {
     }
 });
 
-// Ürün Detayları Endpoint'i
+// Endpoint to view product details
 app.get('/product-details/:productID', async (req, res) => {
     try {
         const { productID } = req.params;
@@ -337,7 +335,7 @@ app.get('/product-details/:productID', async (req, res) => {
     }
 });
 
-// Kullanıcı Adreslerini Listeleme Endpoint'i
+// Endpoint to list user addresses
 app.get('/user-addresses', async (req, res) => {
     try {
         const { userID } = req.body;
@@ -354,7 +352,7 @@ app.get('/user-addresses', async (req, res) => {
     }
 });
 
-// Kullanıcı Siparişlerini Listeleme Endpoint'i
+// Endpoint to list user orders
 app.get('/user-orders', async (req, res) => {
     try {
         const { UserID } = req.body;
@@ -384,7 +382,7 @@ app.get('/user-orders', async (req, res) => {
     }
 });
 
-// Sepetten Ürün Kaldırma Endpoint'i
+// Endpoint to remove product from cart
 app.delete('/remove-from-cart', async (req, res) => {
     try {
         const { UserID, ProductID, Quantity } = req.body;
@@ -403,7 +401,7 @@ app.delete('/remove-from-cart', async (req, res) => {
     }
 });
 
-// Favorilerden Ürün Silme Endpoint'i
+// Endpoint to remove product from favories
 app.delete('/remove-from-favorites', async (req, res) => {
     try {
         const { UserID, ProductID } = req.body;
@@ -421,7 +419,7 @@ app.delete('/remove-from-favorites', async (req, res) => {
     }
 });
 
-// Ürün Arama Endpoint'i
+// Endpoint to search product
 app.get('/search-products', async (req, res) => {
     try {
         const { SearchTerm } = req.body;
@@ -438,6 +436,7 @@ app.get('/search-products', async (req, res) => {
     }
 });
 
+// Endpoint to sort products
 app.get('/sort-products', async (req, res) => {
     try {
         const { sortOption } = req.body;
@@ -454,7 +453,7 @@ app.get('/sort-products', async (req, res) => {
     }
 });
 
-// Kullanıcıyı premium yapma endpoint'i
+// Endpoint to set premium user 
 app.put('/user-premium', async (req, res) => {
     try {
         const { user_id } = req.body;
@@ -469,7 +468,7 @@ app.put('/user-premium', async (req, res) => {
     }
 });
 
-// Yorum güncelleme endpoint'i
+// Endpoint to update review
 app.put('/reviews-update', async (req, res) => {
     try {
         const { review_id, user_id, new_comment, new_star } = req.body;
@@ -488,7 +487,7 @@ app.put('/reviews-update', async (req, res) => {
     }
 });
 
-// Adres güncelleme endpoint'i
+// Endpoint to update user address
 app.put('/update-user-address', async (req, res) => {
     try {
         const { address_id, user_id, name, surname, phone, address, address_title } = req.body;
@@ -511,7 +510,7 @@ app.put('/update-user-address', async (req, res) => {
     }
 });
 
-// Cart View Endpoint
+// Endpoint to view cart
 app.get('/view-cart', async (req, res) => {
     try {
         const { user_id } = req.body;
@@ -534,6 +533,7 @@ app.get('/view-cart', async (req, res) => {
     }
 });
 
+// Endpoint to order history
 app.get('/order-history', async (req, res) => {
     try {
         const { user_id } = req.body;
@@ -583,7 +583,6 @@ app.get('/product-reviews', async (req, res) => {
         res.status(500).send({ error: 'Error fetching product reviews', error: err });
     }
 });
-
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
