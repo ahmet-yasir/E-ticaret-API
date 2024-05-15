@@ -126,7 +126,7 @@ app.post('/add-address', async (req, res) => {
         // Kullanıcı ID'sinin geçerli olup olmadığını kontrol etmek için veritabanı sorgusu yapın
         const pool = await poolPromise;
         const userCheckResult = await pool.request()
-            .input('user_id', sql.Int, user_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
             .query('SELECT 1 FROM Users WHERE user_id = @user_id');
 
         if (userCheckResult.recordset.length === 0) {
@@ -135,7 +135,7 @@ app.post('/add-address', async (req, res) => {
 
         // Adresi eklemek için stored procedure çağrısı yapın
         const result = await pool.request()
-            .input('user_id', sql.Int, user_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
             .input('name', sql.VarChar(32), name)
             .input('surname', sql.VarChar(32), surname)
             .input('phone', sql.VarChar(10), phone)
@@ -160,8 +160,8 @@ app.post('/add-favorite', async (req, res) => {
         // Yeni favori olarak ürünü ekleyin
         const pool = await poolPromise;  
         const insertResult = await pool.request()
-            .input('user_id', sql.Int, user_id)
-            .input('product_id', sql.Int, product_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
+            .input('product_id', sql.UniqueIdentifier, product_id)
             .execute('spAddFavorite');
 
         // Başarı mesajını yanıt olarak gönderin
@@ -181,8 +181,8 @@ app.post('/add-review', async (req, res) => {
         // Yorumu eklemek için prosedürü çağırın
         const pool = await poolPromise;
         const insertResult = await pool.request()
-            .input('product_id', sql.Int, product_id)
-            .input('user_id', sql.Int, user_id)
+            .input('product_id', sql.UniqueIdentifier, product_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
             .input('review_comment', sql.VarChar(512), review_comment)
             .input('review_star', sql.Int, review_star)
             .execute('spAddReview');
@@ -204,8 +204,8 @@ app.post('/add-to-cart', async (req, res) => {
         // Ürünü sepete ekle veya miktarını güncelle
         const pool = await poolPromise;
         const cartUpdateResult = await pool.request()
-            .input('user_id', sql.Int, user_id)
-            .input('product_id', sql.Int, product_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
+            .input('product_id', sql.UniqueIdentifier, product_id)
             .input('quantity', sql.Int, quantity)
             .execute('spAddToCart');
 
@@ -230,7 +230,7 @@ app.put('/changePassword', async (req, res) => {
         const pool = await poolPromise;
         const chancePasswordResult = await pool.request()
         await pool.request()
-            .input('user_id', sql.Int, user_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
             .input('new_password', sql.VarChar, new_password)
             .execute('spChangePassword');
 
@@ -250,8 +250,8 @@ app.delete('/deleteAddress', async (req, res) => {
     try {
         const pool = await sql.connect(config);
         const result = await pool.request()
-            .input('address_id', sql.Int, address_id)
-            .input('user_id', sql.Int, user_id)
+            .input('address_id', sql.UniqueIdentifier, address_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
             .execute('spDeleteAddress');
 
         if (result.rowsAffected[0] > 0) {
@@ -274,8 +274,8 @@ app.delete('/deleteReview', async (req, res) => {
     try {
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('review_id', sql.Int, review_id)
-            .input('user_id', sql.Int, user_id)
+            .input('review_id', sql.UniqueIdentifier, review_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
             .execute('spDeleteReview');
 
         if (result.rowsAffected[0] > 0) {
@@ -319,7 +319,7 @@ app.get('/product-details-and-reviews/:productId', async (req, res) => {
         // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('product_id', sql.Int, productID)
+            .input('product_id', sql.UniqueIdentifier, productID)
             .execute('spGetProductDetailsAndReviews');
 
         // Prosedürden dönen sonuçları alın
@@ -346,7 +346,7 @@ app.get('/product-details', async (req, res) => {
         // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('product_id', sql.Int, productID)
+            .input('product_id', sql.UniqueIdentifier, productID)
             .execute('spGetProductDetailsUsingView');
 
         // Sonuçları döndürme
@@ -365,7 +365,7 @@ app.get('/user-addresses', async (req, res) => {
         // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('user_id', sql.Int, userID)
+            .input('user_id', sql.UniqueIdentifier, userID)
             .execute('spListUserAddresses');
 
         // Sonuçları döndürme
@@ -384,7 +384,7 @@ app.get('/user-orders', async (req, res) => {
         // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('user_id', sql.Int, UserID)
+            .input('user_id', sql.UniqueIdentifier, UserID)
             .execute('spListUserOrders');
 
         // Siparişleri ve detaylarını ayrı ayrı diziye ayırma
@@ -417,8 +417,8 @@ app.delete('/remove-from-cart', async (req, res) => {
         // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('user_id', sql.Int, UserID)
-            .input('product_id', sql.Int, ProductID)
+            .input('user_id', sql.UniqueIdentifier, UserID)
+            .input('product_id', sql.UniqueIdentifier, ProductID)
             .input('quantity', sql.Int, Quantity)
             .execute('spRemoveFromCart');
 
@@ -438,8 +438,8 @@ app.delete('/remove-from-favorites', async (req, res) => {
         // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('user_id', sql.Int, UserID)
-            .input('product_id', sql.Int, ProductID)
+            .input('user_id', sql.UniqueIdentifier, UserID)
+            .input('product_id', sql.UniqueIdentifier, ProductID)
             .execute('spRemoveFromFavorites');
 
         // Mesajı döndürme
@@ -496,7 +496,7 @@ app.put('/user/premium/:user_id', async (req, res) => {
         const pool = await poolPromise;
         // Prosedürü çağır
         const result = await pool.request()
-            .input('user_id', sql.Int, user_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
             .execute('spSetUserPremium');
         // Başarılı yanıtı döndür
         res.status(200).json({ message: 'User premium status updated successfully' });
@@ -515,8 +515,8 @@ app.put('/reviews/:review_id', async (req, res) => {
         const pool = await poolPromise;
         // Prosedürü çağır
         const result = await pool.request()
-            .input('review_id', sql.Int, review_id)
-            .input('user_id', sql.Int, user_id)
+            .input('review_id', sql.UniqueIdentifier, review_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
             .input('new_comment', sql.VarChar(512), new_comment)
             .input('new_star', sql.Int, new_star)
             .execute('spUpdateReview');
@@ -538,8 +538,8 @@ app.put('/update-user-address/:address_id', async (req, res) => {
         // Veritabanında adresi güncelle
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('address_id', sql.Int, address_id)
-            .input('user_id', sql.Int, user_id)
+            .input('address_id', sql.UniqueIdentifier, address_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
             .input('name', sql.VarChar(32), name)
             .input('surname', sql.VarChar(32), surname)
             .input('phone', sql.VarChar(10), phone)
@@ -563,7 +563,7 @@ app.get('/view-cart/:user_id', async (req, res) => {
         const pool = await poolPromise;       
         // Sepet bilgilerini almak için stored procedure çağrısı
         const result = await pool.request()
-            .input('user_id', sql.Int, user_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
             .execute('spViewCart');
 
         // Eğer sepette ürün yoksa uygun bir mesaj döndür
@@ -589,7 +589,7 @@ app.get('/order-history/:userId', async (req, res) => {
         // Veritabanı bağlantısı
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('user_id', sql.Int, user_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
             .execute('spViewOrderHistory');
 
         // Sonuçları döndürme
@@ -608,7 +608,7 @@ app.post('/place-order', async (req, res) => {
         // Database connection
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('user_id', sql.Int, user_id)
+            .input('user_id', sql.UniqueIdentifier, user_id)
             .execute('spPlaceOrder');
 
         // Return success message and order ID
@@ -630,7 +630,7 @@ app.get('/product-reviews', async (req, res) => {
         // Database connection
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('product_id', sql.Int, product_id)
+            .input('product_id', sql.UniqueIdentifier, product_id)
             .execute('spViewProductReviews');
 
         // Return product reviews
