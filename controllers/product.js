@@ -48,11 +48,10 @@ export const deleteReview = async (req, res) => {
 export const filterProduct = async (req, res) => {
     try {
         const { producerID, categoryID, minPrice, maxPrice } = req.body;
-        console.log(producerID)
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('producer_id', sql.UniqueIdentifier, producerID)
-            .input('category_id', sql.UniqueIdentifier, categoryID)
+            .input('ProducerID', sql.UniqueIdentifier, producerID)
+            .input('CategoryID', sql.UniqueIdentifier, categoryID)
             .input('MinPrice', sql.Money, minPrice)
             .input('MaxPrice', sql.Money, maxPrice)
             .execute('spFilterProducts');
@@ -70,15 +69,9 @@ export const viewProductPage = async (req, res) => {
         const { productID } = req.params;
 
         const pool = await poolPromise;
-        const result = await pool.query()
+        const result = await pool.request()
             .input('product_id', sql.UniqueIdentifier, productID)
             .execute('spGetProductDetailsAndReviews');
-
-        const productDetailsAndReviews = result.recordset[0];
-
-        if (!productDetailsAndReviews) {
-            return res.status(404).send({ error: 'Product not found', error: err });
-        }
 
         res.status(200).send({message: result.recordset, success: true});
     } 
@@ -93,7 +86,7 @@ export const productDetails = async (req, res) => {
         const { productID } = req.params;
 
         const pool = await poolPromise;
-        const result = await pool.query()
+        const result = await pool.request()
             .input('product_id', sql.UniqueIdentifier, productID)
             .execute('spGetProductDetailsUsingView');
 
@@ -150,7 +143,7 @@ export const updateReview = async (req, res) => {
             .input('new_star', sql.Int, new_star)
             .execute('spUpdateReview');
 
-        res.status(200).send({message: result.recordset, success: true});
+        res.status(200).send({message: "Yorum başarıyla güncellendi.", success: true});
     } 
 	catch (err) {
         res.status(500).send({ error: 'Error updating review', error: err });

@@ -14,6 +14,7 @@ export const registerWithGoogle = async (req, res) => {
             .input('email', sql.VarChar, email)
             .input('token', sql.VarChar, token)
             .execute('spAddUserWithGoogleAuth');
+            
         if (result.recordset.length > 0 && result.recordset[0].RegisterSuccess === 1) {
             res.status(201).send({ message: result.recordset[0].Message, success: true });
         } 
@@ -96,7 +97,6 @@ export const loginWithPassword = async (req, res) => {
 		}
     } 
     catch (err) {
-        console.log(err);
         res.status(500).send({ message: 'Error logging in', error: err });
     }	
 };

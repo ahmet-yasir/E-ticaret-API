@@ -1,5 +1,6 @@
 import sql from 'mssql';
 import {poolPromise} from '../connection.js';
+import md5 from 'md5';
 
 // Endpoint to add address
 export const addAddress = async (req, res) => {
@@ -37,10 +38,10 @@ export const chancePassword = async (req, res) => {
             .input('new_password', sql.VarChar, newhashedPassword)
             .execute('spChangePassword');
 
-        res.status(200).send({ message: chancePasswordResult.recordset[0].Message, success: true });
+        res.status(200).send({ message: 'Şifre başarıyla değiştirildi.', success: true });
     } 
 	catch (err) {
-        res.status(500).send({ message: 'Şifre değiştirme hatası', error: err });
+        res.status(500).send({ message: 'Şifre değiştirilirken bir hata oluştu!', error: err });
     }
 };
 
@@ -94,20 +95,7 @@ export const userOrders = async (req, res) => {
             .input('user_id', sql.UniqueIdentifier, UserID)
             .execute('spListUserOrders');
 
-        const orders = result.recordsets[0];
-        const orderDetails = result.recordsets[1];
-
-        const userOrders = orders.map(order => {
-            const details = orderDetails.filter(detail => detail.order_id === order.order_id);
-            return {
-                order_id: order.order_id,
-                date: order.date,
-                total_amount: order.total_amount,
-                details: details
-            };
-        });
-
-        res.status(200).send({message: userOrders, success: true});
+        res.status(200).send({message: result.recordset, success: true});
     } 
 	catch (err) {
         res.status(500).send({ error: 'Error listing user orders', error: err});
@@ -123,7 +111,7 @@ export const userPremium = async (req, res) => {
         const result = await pool.request()
             .input('user_id', sql.UniqueIdentifier, user_id)
             .execute('spSetUserPremium');
-        res.status(200).send({message: result.recordset, success: true});
+        res.status(200).send({message: 'Kullanıcı hesabı premium hesap olarak değiştirildi.', success: true});
     } 
 	catch (err) {
         res.status(500).send({ error: 'Error updating user premium status', error: err });
@@ -146,7 +134,7 @@ export const updateUserAddress = async (req, res) => {
             .input('address_title', sql.VarChar(30), address_title)
             .execute('spUpdateUserAddress');
 
-        res.status(200).send({ message: result.recordset[0].Message, success: true });
+        res.status(200).send({ message: 'Adres başarıyla değiştirildi.', success: true });
     } 
 	catch (err) {
         res.status(500).send({ error: 'Error updating user address', error: err });
